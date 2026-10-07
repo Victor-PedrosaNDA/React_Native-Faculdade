@@ -36,6 +36,16 @@ export default function AppTabs() {
           renderingMode="template"
         />
       </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="extrato">
+        <NativeTabs.Trigger.Label>Extrato</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="list.bullet.rectangle" md="receipt_long" />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="lancamento">
+        <NativeTabs.Trigger.Label>Novo</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon sf="plus.circle" md="add" />
+      </NativeTabs.Trigger>
     </NativeTabs>
   );
 }
