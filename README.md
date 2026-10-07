@@ -1,8 +1,8 @@
-# 📱 MeuApp - React Native & Expo (Faculdade)
+# 📱 LogicMoney - React Native & Expo (Faculdade)
 
 Repositório oficial de atividades práticas e projetos desenvolvidos com **React Native**
 
-Este aplicativo foi construído como um trabalho de graduaçao com foco em código limpo, componentização e navegação baseada em rotas estruturadas.
+Este aplicativo foi feito para fins institucionais com foco em código limpo, componentização e navegação baseada em rotas estruturadas.
 
 ## 🛠️ Tecnologias e Ecossistema
 
