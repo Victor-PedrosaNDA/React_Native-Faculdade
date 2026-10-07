@@ -1,4 +1,4 @@
-# 📱 LogicMoney - React Native & Expo (Faculdade)
+# 📱 LogicMoney App - React Native & Expo (Faculdade)
 
 Repositório oficial de atividades práticas e projetos desenvolvidos com **React Native**
 
