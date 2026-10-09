@@ -2,7 +2,7 @@
 # 📱 LogicMoney App - React Native & Expo (Faculdade)
 
 
-Aplicativo de finanças pessoais desenvolvido em **React Native** e **Expo** como projeto da disciplina Programação para Dispositivos Móveis.
+Aplicativo de finanças pessoais desenvolvido em **React Native** e **Expo** 
 
 Desenvolvido para fins institucionais, o app mantém as telas e a navegação do projeto original e inclui recursos para registrar e acompanhar receitas e despesas.
 Este aplicativo foi feito para fins institucionais com foco em código limpo, componentização e navegação baseada em rotas estruturadas.
