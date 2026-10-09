@@ -1,6 +1,4 @@
-<<<<<<< HEAD
-# 📱 MeuApp — FinTrack
-=======
+
 # 📱 LogicMoney App - React Native & Expo (Faculdade)
 >>>>>>> a405e64cae32225dee28c0b082cb76c86fd4756a
 
