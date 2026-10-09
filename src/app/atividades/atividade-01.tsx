@@ -10,8 +10,16 @@ import {
 
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
+import { DonutChart } from "@/components/donut-chart";
+import { MonthSwitcher } from "@/components/month-switcher";
 import { Spacing } from "@/constants/theme";
 import { useFinance } from "@/hooks/use-finance";
+import {
+  belongsToMonth,
+  currentYearMonth,
+  filterTransactions,
+  summarizeTransactions,
+} from "@/utils/finance";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
@@ -21,15 +29,24 @@ const currency = new Intl.NumberFormat("pt-BR", {
 export default function DashboardScreen() {
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "income" | "expense">("all");
-  const { transactions, balance, income, expectedIncome, expenses } =
-    useFinance();
-  const filteredTransactions = transactions.filter((item) => {
-    const matchesType = filter === "all" || item.type === filter;
-    const matchesQuery = `${item.title} ${item.category}`
-      .toLocaleLowerCase("pt-BR")
-      .includes(query.trim().toLocaleLowerCase("pt-BR"));
-    return matchesType && matchesQuery;
-  });
+  const [month, setMonth] = useState(currentYearMonth);
+  const { transactions } = useFinance();
+  const monthlyTransactions = transactions.filter((item) =>
+    belongsToMonth(item, month),
+  ).sort((first, second) =>
+    second.transactionDate.localeCompare(first.transactionDate),
+  );
+  const summary = summarizeTransactions(monthlyTransactions);
+  const expectedIncome = monthlyTransactions
+    .filter(
+      (item) => item.type === "income" && item.incomeStatus === "expected",
+    )
+    .reduce((total, item) => total + item.amount, 0);
+  const filteredTransactions = filterTransactions(
+    monthlyTransactions,
+    filter,
+    query,
+  );
 
   return (
     <>
@@ -53,16 +70,20 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
           <ThemedText style={styles.balanceLabel} themeColor="textSecondary">
-            Saldo disponível
+            Saldo do mês
           </ThemedText>
-          <ThemedText type="title">{currency.format(balance)}</ThemedText>
+          <ThemedText type="title">
+            {currency.format(summary.balance)}
+          </ThemedText>
         </ThemedView>
+
+        <MonthSwitcher value={month} onChange={setMonth} />
 
         <View style={styles.summaryGrid}>
           {[
-            { label: "Receitas", value: income, accent: "#10b981" },
+            { label: "Receitas", value: summary.income, accent: "#10b981" },
             { label: "A receber", value: expectedIncome, accent: "#3b82f6" },
-            { label: "Despesas", value: expenses, accent: "#f59e0b" },
+            { label: "Despesas", value: summary.expenses, accent: "#f59e0b" },
           ].map((card) => (
             <ThemedView
               key={card.label}
@@ -81,6 +102,61 @@ export default function DashboardScreen() {
         </View>
 
         <ThemedView style={styles.panel} type="backgroundElement">
+          <ThemedText type="subtitle">Despesas por categoria</ThemedText>
+          {summary.byCategory.length ? (
+            <View style={styles.chartRow}>
+              <DonutChart
+                data={summary.byCategory.map((item) => ({
+                  value: item.total,
+                  color: item.color,
+                }))}
+              >
+                <ThemedText type="small" themeColor="textSecondary">
+                  Total
+                </ThemedText>
+                <ThemedText type="smallBold">
+                  {currency.format(summary.expenses)}
+                </ThemedText>
+              </DonutChart>
+              <View style={styles.legend}>
+                {summary.byCategory.slice(0, 6).map((item) => (
+                  <View key={item.category} style={styles.legendRow}>
+                    <View
+                      style={[styles.dot, { backgroundColor: item.color }]}
+                    />
+                    <ThemedText
+                      type="small"
+                      numberOfLines={1}
+                      style={styles.legendName}
+                    >
+                      {item.category}
+                    </ThemedText>
+                    <ThemedText type="smallBold">
+                      {Math.round(item.percent)}%
+                    </ThemedText>
+                  </View>
+                ))}
+              </View>
+            </View>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              Sem despesas neste mês.
+            </ThemedText>
+          )}
+        </ThemedView>
+
+        <ThemedView style={styles.panel} type="backgroundElement">
+          <View style={styles.sectionHeader}>
+            <ThemedText type="subtitle">Lançamentos do mês</ThemedText>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => router.navigate("/extrato")}
+            >
+              <ThemedText type="smallBold" themeColor="textSecondary">
+                Ver todos
+              </ThemedText>
+            </Pressable>
+          </View>
           <TextInput
             accessibilityLabel="Buscar movimentações"
             onChangeText={setQuery}
@@ -113,7 +189,7 @@ export default function DashboardScreen() {
 
           <View style={styles.transactions}>
             {filteredTransactions.length ? (
-              filteredTransactions.map((item) => {
+              filteredTransactions.slice(0, 5).map((item) => {
                 const expected = item.incomeStatus === "expected";
                 const detail = [
                   item.category,
@@ -189,6 +265,26 @@ const styles = StyleSheet.create({
   },
   successText: {
     marginTop: Spacing.one,
+  },
+  chartRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.three,
+  },
+  legend: {
+    flex: 1,
+    minWidth: 150,
+    gap: Spacing.two,
+  },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.one,
+  },
+  legendName: {
+    flex: 1,
   },
   summaryGrid: {
     flexDirection: "row",

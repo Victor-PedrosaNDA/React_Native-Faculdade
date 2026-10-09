@@ -2,34 +2,26 @@ import { router } from "expo-router";
 import { useState } from "react";
 import { Pressable, ScrollView, StyleSheet, View } from "react-native";
 
+import { DonutChart } from "@/components/donut-chart";
+import { MonthSwitcher } from "@/components/month-switcher";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { Spacing } from "@/constants/theme";
 import { useFinance } from "@/hooks/use-finance";
+import {
+  belongsToMonth,
+  currentYearMonth,
+  summarizeTransactions,
+} from "@/utils/finance";
 
 const currency = new Intl.NumberFormat("pt-BR", {
   style: "currency",
   currency: "BRL",
 });
 
-const categoryColors: Record<string, string> = {
-  Moradia: "#8b5cf6",
-  Alimentação: "#10b981",
-  Transporte: "#f59e0b",
-  Lazer: "#ef4444",
-  Saúde: "#06b6d4",
-  Outros: "#64748b",
-};
-
-const initialCategories = [
-  { name: "Moradia", value: 0 },
-  { name: "Alimentação", value: 0 },
-  { name: "Transporte", value: 0 },
-  { name: "Lazer", value: 0 },
-];
-
 export default function DashboardScreen() {
   const [showWelcome, setShowWelcome] = useState(true);
+  const [month, setMonth] = useState(currentYearMonth);
   const today = new Date();
   const dateParts = [
     { label: "Dia", value: String(today.getDate()).padStart(2, "0") },
@@ -39,40 +31,40 @@ export default function DashboardScreen() {
     },
     { label: "Ano", value: String(today.getFullYear()) },
   ];
-  const { transactions, balance, income, expectedIncome, expenses } =
-    useFinance();
-  const recordedExpenses = transactions.filter(
-    (item) => item.type === "expense",
-  );
-  const categoryNames = new Set([
-    ...initialCategories.map((category) => category.name),
-    ...recordedExpenses.map((item) => item.category),
-  ]);
-  const categories = Array.from(categoryNames, (name) => ({
-    name,
-    value:
-      (initialCategories.find((category) => category.name === name)?.value ??
-        0) +
-      recordedExpenses
-        .filter((item) => item.category === name)
-        .reduce((total, item) => total + item.amount, 0),
-    color: categoryColors[name] ?? "#64748b",
-  }));
+  const { transactions } = useFinance();
+  const monthlyTransactions = transactions
+    .filter((item) => belongsToMonth(item, month))
+    .sort((first, second) =>
+      second.transactionDate.localeCompare(first.transactionDate),
+    );
+  const summary = summarizeTransactions(monthlyTransactions);
+  const expectedIncome = monthlyTransactions
+    .filter(
+      (item) => item.type === "income" && item.incomeStatus === "expected",
+    )
+    .reduce((total, item) => total + item.amount, 0);
   const summaryCards = [
-    { label: "Saldo", value: currency.format(balance), accent: "#7c3aed" },
-    { label: "Receitas", value: currency.format(income), accent: "#10b981" },
-    { label: "Despesas", value: currency.format(expenses), accent: "#f59e0b" },
+    {
+      label: "Saldo",
+      value: currency.format(summary.balance),
+      accent: "#7c3aed",
+    },
+    {
+      label: "Receitas",
+      value: currency.format(summary.income),
+      accent: "#10b981",
+    },
+    {
+      label: "Despesas",
+      value: currency.format(summary.expenses),
+      accent: "#f59e0b",
+    },
     {
       label: "A receber",
       value: currency.format(expectedIncome),
       accent: "#3b82f6",
     },
   ];
-  const maximumCategoryValue = Math.max(
-    1,
-    ...categories.map((category) => category.value),
-  );
-
   if (showWelcome) {
     return (
       <ScrollView contentContainerStyle={styles.welcomeContainer}>
@@ -165,6 +157,8 @@ export default function DashboardScreen() {
           </View>
         </ThemedView>
 
+        <MonthSwitcher value={month} onChange={setMonth} />
+
         <ThemedView style={styles.heroCard} type="backgroundElement">
           <View style={styles.heroHeader}>
             <View>
@@ -176,13 +170,15 @@ export default function DashboardScreen() {
           </View>
 
           <ThemedText style={styles.balanceLabel} themeColor="textSecondary">
-            Saldo disponível
+            Saldo do mês
           </ThemedText>
-          <ThemedText type="title">{currency.format(balance)}</ThemedText>
+          <ThemedText type="title">
+            {currency.format(summary.balance)}
+          </ThemedText>
           <ThemedText style={styles.successText} themeColor="textSecondary">
-            {transactions.length === 0
+            {monthlyTransactions.length === 0
               ? "Adicione seu primeiro lançamento para começar"
-              : `${transactions.length} lançamento${transactions.length === 1 ? "" : "s"} registrado${transactions.length === 1 ? "" : "s"} neste mês`}
+              : `${monthlyTransactions.length} lançamento${monthlyTransactions.length === 1 ? "" : "s"} neste mês`}
           </ThemedText>
         </ThemedView>
 
@@ -218,35 +214,50 @@ export default function DashboardScreen() {
           <View style={styles.sectionHeader}>
             <ThemedText type="subtitle">Gastos por categoria</ThemedText>
             <ThemedText type="smallBold" themeColor="textSecondary">
-              {currency.format(
-                categories.reduce((total, item) => total + item.value, 0),
-              )}
+              {currency.format(summary.expenses)}
             </ThemedText>
           </View>
 
-          <View style={styles.listContainer}>
-            {categories.map((item) => (
-              <View key={item.name} style={styles.categoryRow}>
-                <View style={styles.categoryHeader}>
-                  <ThemedText type="smallBold">{item.name}</ThemedText>
-                  <ThemedText type="small" themeColor="textSecondary">
-                    {currency.format(item.value)}
-                  </ThemedText>
-                </View>
-                <View style={styles.barTrack}>
-                  <View
-                    style={[
-                      styles.barFill,
-                      {
-                        width: `${(item.value / maximumCategoryValue) * 100}%`,
-                        backgroundColor: item.color,
-                      },
-                    ]}
-                  />
-                </View>
+          {summary.byCategory.length ? (
+            <View style={styles.chartRow}>
+              <DonutChart
+                data={summary.byCategory.map((item) => ({
+                  value: item.total,
+                  color: item.color,
+                }))}
+              >
+                <ThemedText type="small" themeColor="textSecondary">
+                  Despesas
+                </ThemedText>
+                <ThemedText type="smallBold">
+                  {currency.format(summary.expenses)}
+                </ThemedText>
+              </DonutChart>
+              <View style={styles.legend}>
+                {summary.byCategory.slice(0, 6).map((item) => (
+                  <View key={item.category} style={styles.legendRow}>
+                    <View
+                      style={[styles.dot, { backgroundColor: item.color }]}
+                    />
+                    <ThemedText
+                      type="small"
+                      numberOfLines={1}
+                      style={styles.legendName}
+                    >
+                      {item.category}
+                    </ThemedText>
+                    <ThemedText type="smallBold">
+                      {Math.round(item.percent)}%
+                    </ThemedText>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
+            </View>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              Sem despesas neste mês.
+            </ThemedText>
+          )}
         </ThemedView>
 
         <ThemedView style={styles.panel} type="backgroundElement">
@@ -255,15 +266,15 @@ export default function DashboardScreen() {
           </View>
 
           <View style={styles.transactions}>
-            {transactions.length === 0 ? (
+            {monthlyTransactions.length === 0 ? (
               <ThemedText type="small" themeColor="textSecondary">
                 Nenhuma movimentação ainda. Use “+ Novo” para registrar a
                 primeira.
               </ThemedText>
             ) : (
-              transactions.slice(0, 4).map((item) => (
+              monthlyTransactions.slice(0, 5).map((item) => (
                 <View
-                  key={`${item.title}-${item.detail}`}
+                  key={item.id}
                   style={styles.transactionRow}
                 >
                   <View>
@@ -275,9 +286,11 @@ export default function DashboardScreen() {
                   <ThemedText
                     type="smallBold"
                     style={
-                      item.type === "income"
-                        ? styles.positiveValue
-                        : styles.negativeValue
+                      item.incomeStatus === "expected"
+                        ? styles.expectedValue
+                        : item.type === "income"
+                          ? styles.positiveValue
+                          : styles.negativeValue
                     }
                   >
                     {item.type === "income" ? "+" : "-"}
@@ -472,26 +485,25 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
-  listContainer: {
+  chartRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    flexWrap: "wrap",
+    justifyContent: "center",
+    gap: Spacing.three,
+  },
+  legend: {
+    flex: 1,
+    minWidth: 150,
     gap: Spacing.two,
   },
-  categoryRow: {
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.one,
   },
-  categoryHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  barTrack: {
-    height: 10,
-    borderRadius: 999,
-    backgroundColor: "#e5e7eb",
-    overflow: "hidden",
-  },
-  barFill: {
-    height: "100%",
-    borderRadius: 999,
+  legendName: {
+    flex: 1,
   },
   transactions: {
     gap: Spacing.two,
@@ -509,5 +521,8 @@ const styles = StyleSheet.create({
   },
   negativeValue: {
     color: "#ef4444",
+  },
+  expectedValue: {
+    color: "#2563eb",
   },
 });

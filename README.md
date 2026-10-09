@@ -1,8 +1,8 @@
-# 📱 MeuApp - React Native & Expo (Faculdade)
+# 📱 MeuApp — FinTrack
 
-Repositório oficial de atividades práticas e projetos desenvolvidos com **React Native**
+Aplicativo de finanças pessoais desenvolvido em **React Native** e **Expo** como projeto da disciplina Programação para Dispositivos Móveis.
 
-Este aplicativo foi construído como um trabalho de graduaçao com foco em código limpo, componentização e navegação baseada em rotas estruturadas.
+Desenvolvido para fins institucionais, o app mantém as telas e a navegação do projeto original e inclui recursos para registrar e acompanhar receitas e despesas.
 
 ## 🛠️ Tecnologias e Ecossistema
 
@@ -13,6 +13,10 @@ O projeto utiliza um stack moderno para desenvolvimento multiplataforma:
 * [**Expo**](https://expo.dev/) — Plataforma que acelera o desenvolvimento e testes em dispositivos móveis.
 
 * [**Expo Router**](https://docs.expo.dev/router/introduction/) — Sistema de roteamento baseado em arquivos (File-based routing).
+
+* **Expo FileSystem e Expo Sharing** — Criação e compartilhamento do relatório CSV no dispositivo.
+
+* **React Native SVG** — Renderização do gráfico de despesas por categoria.
 
 * **TypeScript** — Tipagem estática para maior segurança e escalabilidade do código.
 
@@ -27,15 +31,16 @@ MeuApp/
 ├── assets/          # Recursos estáticos (imagens, fontes e ícones)
 ├── src/
 │   ├── app/         # Telas, rotas e layouts do aplicativo (Expo Router)
-│   │   ├── atividades/  # Exercícios e entregas práticas da faculdade
+│   │   ├── atividades/  # Tela Carteira
 │   │   ├── _layout.tsx  # Layout principal e provedores de navegação
-│   │   ├── explore.tsx  # Tela de exploração de recursos
-│   │   ├── index.tsx    # Tela inicial (Home)
-│   │   └── lancamento.tsx # Tela de registros e formulários
-│   ├── components/  # Componentes reutilizáveis de interface (UI, abas, badges)
+│   │   ├── explore.tsx  # Metas e hábitos
+│   │   ├── extrato.tsx  # Extrato, filtros, edição e exportação CSV
+│   │   ├── index.tsx    # Painel mensal
+│   │   └── lancamento.tsx # Formulário de receitas e despesas
+│   ├── components/  # Componentes reutilizáveis, incluindo gráfico e editor
 │   ├── constants/   # Configurações globais e esquemas de cores
-│   ├── hooks/       # Custom hooks (ex: gerenciamento de temas e cores)
-│   └── utils/       # Funções utilitárias e regras de negócio (ex: cálculos matemáticos)
+│   ├── hooks/       # Contexto financeiro e gerenciamento de temas e cores
+│   └── utils/       # Cálculos financeiros, filtros, agrupamento e CSV
 ├── package.json     # Dependências e scripts do projeto
 └── tsconfig.json    # Configurações do TypeScript
 
@@ -44,15 +49,23 @@ MeuApp/
 
 ## 🚀 Funcionalidades Principais
 
-* **Navegação Dinâmica:** Telas organizadas e gerenciadas através do Expo Router.
+* **Painel mensal:** navegação entre meses, saldo, receitas, despesas e gráfico de despesas por categoria.
 
-* **Módulo de Atividades:** Espaço dedicado para o desenvolvimento e testes das tarefas acadêmicas.
+* **Lançamentos:** cadastro de receitas e despesas com valor, categoria, data, método de pagamento, recorrência e recebimento previsto.
 
-* **Componentes Customizados:** Elementos visuais reutilizáveis para manter a consistência da interface.
+* **Extrato:** lançamentos agrupados por dia, com busca sem distinção de acentos, filtros por tipo e edição ou exclusão com confirmação.
 
-* **Suporte a Temas:** Adaptação de esquemas de cores para melhor experiência visual.
+* **Exportação CSV:** exporta os lançamentos do mês selecionado; no celular abre a folha de compartilhamento e na web inicia o download.
 
-* **Lógica Utilitária:** Funções separadas para processamento de dados e cálculos.
+* **Navegação e interface:** telas organizadas com Expo Router, componentes reutilizáveis e suporte aos temas claro e escuro do sistema.
+
+* **Persistência local:** os lançamentos são salvos no armazenamento do aparelho e restaurados ao abrir o app novamente.
+
+* **Testes automatizados:** cobertura das regras de resumo mensal, filtros, agrupamento, exportação CSV e persistência local.
+
+## ℹ️ Estado atual e limitações
+
+Os lançamentos persistem **somente neste aparelho**. O AsyncStorage não é criptografado; evite armazenar informações altamente sensíveis. Ainda não há autenticação, sincronização com Supabase, Row Level Security ou integração com bancos via Open Finance/Pluggy. Reinstalar ou limpar os dados do app pode apagar os lançamentos locais; exporte o CSV para manter uma cópia.
 
 ## ⚙️ Como Executar o Projeto Localmente
 
@@ -95,6 +108,14 @@ Certifique-se de ter o **Node.js** instalado em sua máquina.
    * Baixe o aplicativo **Expo Go** no seu celular (Android ou iOS).
 
    * Escaneie o QR Code que aparecerá no seu terminal.
+
+## 🧪 Testes
+
+Execute os testes automatizados com:
+
+```sh
+npm test
+```
 
 ## 👨‍💻 Autor
 
