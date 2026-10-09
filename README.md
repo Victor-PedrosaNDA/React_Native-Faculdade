@@ -4,11 +4,8 @@
 
 Aplicativo de finanças pessoais desenvolvido em **React Native** e **Expo** como projeto da disciplina Programação para Dispositivos Móveis.
 
-<<<<<<< HEAD
 Desenvolvido para fins institucionais, o app mantém as telas e a navegação do projeto original e inclui recursos para registrar e acompanhar receitas e despesas.
-=======
 Este aplicativo foi feito para fins institucionais com foco em código limpo, componentização e navegação baseada em rotas estruturadas.
->>>>>>> a405e64cae32225dee28c0b082cb76c86fd4756a
 
 ## 🛠️ Tecnologias e Ecossistema
 
